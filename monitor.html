@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="jquery-3.6.js"></script>
+<script src="conf.js"></script>
+	<link rel="stylesheet" type="text/css" href="style.css">
+
+<meta charset="utf-8">
+<meta name="author" content="http://www.softwhy.com/" />
+<title>蚂蚁部落</title>
+<script type="text/javascript">
+
+var stockUrl='http://hq.sinajs.cn/list=sh000001';
+var prices = new Array();
+var codes =new Array();
+for(i = 0; i < stockList.length; i++) {
+	var stock = stockList[i].split(":");
+	var code = stock[0];
+	var price = stock[1]==null? 0 : stock[1];
+	stockUrl += ","+code;
+	codes[i] = code;
+	prices[i] = price;
+} 
+
+$(document).ready(function(){
+	$("button").click(function(){
+		refeshStockInfos();
+		//$.get("http://hq.sinajs.cn/list=sh000001",function(data,status){
+		//	console.log("数据: " + data + "\n状态: " + status);
+		//});
+	});
+	refeshStockInfos();
+});
+
+var refeshStockInfos = function refeshStockInfos(){
+	$.ajax({
+		type: "get",
+		url: stockUrl,
+		contentType: "application/x-www-form-urlencoded",
+		success: function (data) {
+			var infos = data.split(/[(\r\n)\r\n]+/); // 根据换行或者回车进行识别
+			var infosTrim =new Array();
+			for(i = 0; i < infos.length-1; i++) {
+				var info = infos[i];
+				var infoCutPre = info.substring(info.indexOf('"')+1, info.lastIndexOf('"'));
+				infosTrim[i]=infoCutPre;
+			}
+			packData2Table(infosTrim)
+		}
+	});
+}
+
+var packData2Table = function packData2Table(data){
+    $("#J_TbData").empty();
+	for( var i = 0; i < data.length; i++ ) {
+		//0name, 2opn, 2yes, 3cur, 4hig, 5low, 21salp, 20salv, 11buyp,10buyv
+		var infos = data[i].split(',');
+		//动态创建一个tr行标签,并且转换成jQuery对象
+		var $trTemp = $("<tr></tr>");
+		var inp = i==0 ? '0': prices[i-1];
+
+		//往行里面追加 td单元格
+		var code = i==0 ? 'sh': codes[i-1].substring(5)+infos[0].charAt(0);
+		$trTemp.append("<td>"+ code +"</td>");
+		$trTemp.append("<td>"+ infos[1] +"</td>");
+		
+		var yes = infos[2]
+		$trTemp.append("<td>"+ yes +"</td>");
+		
+		var cur = infos[3];
+		var curin = i==0||inp==0 ? cur : cur + " " + Math.round(10000*(cur/inp-1))/100;
+		$trTemp.append("<td>"+ curin +"</td>");
+		
+		var cur_yes = Math.round(10000*(cur/yes-1))/100;
+		$trTemp.append("<td>"+ cur_yes +"</td>");		
+		$trTemp.append("<td>"+ infos[4] +"</td>");
+		$trTemp.append("<td>"+ infos[5] +"</td>");
+		$trTemp.append("<td>"+ infos[21] +"</td>");
+		$trTemp.append("<td>"+ infos[20] +"</td>");
+		$trTemp.append("<td>"+ infos[11] +"</td>");
+		$trTemp.append("<td>"+ infos[10] +"</td>");
+		
+		var inv = i==0||prices[i-1]=='0' ? '-': prices[i-1];
+		$trTemp.append("<td>"+ inv +"</td>");
+		// $("#J_TbData").append($trTemp);
+		$trTemp.appendTo("#J_TbData");
+		
+		if (i==0) $("#timeshow").html(infos[31]);
+	}
+}
+
+function dealDec(){
+}
+</script>
+</head>
+<body>
+<p>名称: <input type="text" id="test" value="菜鸟教程"></p>
+<p id="timeshow"></p>
+<button>显示值</button>
+<table>
+        <thead>
+            <tr>
+                <th>code</th>
+                <th>opn</th>
+                <th>yes</th>
+                <th>cur</th>
+                <th>cur-yes</th>
+                <th>hig</th>
+                <th>low</th>
+                <th>salp</th>
+                <th>salv</th>
+                <th>buyp</th>
+                <th>buyv</th>
+                <th>inp</th>
+            </tr>
+        </thead>
+        <tbody id="J_TbData">
+        </tbody>
+    </table>
+</body>
+</html>
+
